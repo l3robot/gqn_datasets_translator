@@ -4,6 +4,6 @@
 
 Don't hesitate to make a pull request. 
 
-Usage:
+**Usage:**
 
 ``
