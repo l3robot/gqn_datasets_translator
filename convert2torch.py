@@ -1,3 +1,8 @@
+"""
+A lot of the following code is a rewrite of:
+https://github.com/deepmind/gqn-datasets/data_reader.py
+"""
+
 import os
 import collections
 import torch
