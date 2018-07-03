@@ -1,15 +1,11 @@
-"""
-A lot of the following code is a rewrite of:
-https://github.com/deepmind/gqn-datasets/data_reader.py
-"""
-
+import time
 import os
 import collections
 import torch
+from multiprocessing import Process
 
 from tfrecord.tfrecord import Reader
 import tensorflow as tf
-
 
 DatasetInfo = collections.namedtuple(
     'DatasetInfo',
@@ -77,6 +73,7 @@ def _convert_frame_data(jpeg_data):
   decoded_frames = tf.image.decode_jpeg(jpeg_data)
   return tf.image.convert_image_dtype(decoded_frames, dtype=tf.float32)
 
+
 def preprocess_frames(dataset_info, example, jpeg='False'):
     """Instantiates the ops used to preprocess the frames data."""
     frames = tf.concat(example['frames'], axis=0)
@@ -90,6 +87,7 @@ def preprocess_frames(dataset_info, example, jpeg='False'):
             frames = tf.image.resize_bilinear(frames, new_frame_dimensions[:2], align_corners=True)
             frames = tf.reshape(frames, (-1, dataset_info.sequence_size) + new_frame_dimensions)
     return frames
+
 
 def preprocess_cameras(dataset_info, example, raw):
     """Instantiates the ops used to preprocess the cameras data."""
@@ -108,7 +106,6 @@ def preprocess_cameras(dataset_info, example, raw):
         return raw_pose_params
 
 
-
 def _get_dataset_files(dataset_info, mode, root):
     """Generates lists of files for a given dataset version."""
     basepath = dataset_info.basepath
@@ -123,7 +120,12 @@ def _get_dataset_files(dataset_info, mode, root):
     return [os.path.join(base, file) for file in files]
 
 
-def convert_raw_to_numpy(dataset_info, raw_data, jpeg=False):
+def encapsulate(frames, cameras):
+    return Scene(cameras=cameras, frames=frames)
+
+
+# @profile
+def convert_raw_to_numpy(dataset_info, raw_data, path, jpeg=False):
     feature_map = {
         'frames': tf.FixedLenFeature(
             shape=dataset_info.sequence_size, dtype=tf.string),
@@ -137,28 +139,8 @@ def convert_raw_to_numpy(dataset_info, raw_data, jpeg=False):
     with tf.train.SingularMonitoredSession() as sess:
         frames = sess.run(frames)
         cameras = sess.run(cameras)
-    return frames, cameras
-
-
-def convert_raws_to_numpy(dataset_info, raw_data, jpeg=False):
-    feature_map = {
-        'frames': tf.FixedLenFeature(
-            shape=dataset_info.sequence_size, dtype=tf.string),
-        'cameras': tf.FixedLenFeature(
-            shape=[dataset_info.sequence_size * 5],
-            dtype=tf.float32)
-    }
-    example = tf.parse_example(raw_data, feature_map)
-    frames = preprocess_frames(dataset_info, example, jpeg)
-    cameras = preprocess_cameras(dataset_info, example, jpeg)
-    with tf.train.SingularMonitoredSession() as sess:
-        frames = sess.run(frames)
-        cameras = sess.run(cameras)
-    return frames, cameras
-
-
-def encapsulate(frames, cameras):
-    return Scene(cameras=cameras, frames=frames)
+    scene = encapsulate(frames, cameras)
+    torch.save(scene, path)
 
 
 def show_frame(frames, scene, views):
@@ -167,51 +149,6 @@ def show_frame(frames, scene, views):
     import matplotlib.pyplot as plt
     plt.imshow(frames[scene,views])
     plt.show()
-
-
-def test_both_iterate_more_than_one_per_file():
-    DATASET = 'rooms_free_camera_with_object_rotations'
-    dataset_info = _DATASETS[DATASET]
-
-    file_names = _get_dataset_files(dataset_info, 'train', '.')
-
-    engine = tf.python_io.tf_record_iterator(file_names[0])
-
-    for i, raw_data in enumerate(engine):
-        frames, cameras = convert_raw_to_numpy(dataset_info, raw_data)
-        show_frame(frames, 0, 0)
-        if i == 1:
-            break
-
-    filename_queue = tf.train.string_input_producer(file_names, shuffle=False)
-    reader = tf.TFRecordReader()
-
-    key, raw_data = reader.read_up_to(filename_queue, 16)
-    frames, cameras = convert_raws_to_numpy(dataset_info, raw_data)
-    show_frame(frames, 0, 0)
-    show_frame(frames, 1, 0)
-
-
-def test_count_number_of_total_examples():
-    DATASET = 'rooms_free_camera_with_object_rotations'
-    dataset_info = _DATASETS[DATASET]
-
-    file_names = _get_dataset_files(dataset_info, 'train', '.')
-    tot = 0
-    for file in file_names:
-        engine = tf.python_io.tf_record_iterator(file)
-        for i, _ in enumerate(engine):
-            pass
-        tot += i
-    print(f' [-] {tot} scenes in the train dataset')
-    file_names = _get_dataset_files(dataset_info, 'test', '.')
-    tot = 0
-    for file in file_names:
-        engine = tf.python_io.tf_record_iterator(file)
-        for i, _ in enumerate(engine):
-            pass
-        tot += i
-    print(f' [-] {tot} scenes in the test dataset')
 
 
 if __name__ == '__main__':
@@ -241,9 +178,8 @@ if __name__ == '__main__':
         for i, raw_data in enumerate(engine):
             path = os.path.join(torch_dataset_path_train, f'{tot+i}.pt')
             print(f' [-] converting scene {file}-{i} into {path}')
-            frames, cameras = convert_raw_to_numpy(dataset_info, raw_data, jpeg=True)
-            scene = encapsulate(frames, cameras)
-            torch.save(scene, path)
+            p = Process(target=convert_raw_to_numpy, args=(dataset_info, raw_data, path, True))
+            p.start();p.join() 
         tot += i
 
     print(f' [-] {tot} scenes in the train dataset')
@@ -257,9 +193,8 @@ if __name__ == '__main__':
         for i, raw_data in enumerate(engine):
             path = os.path.join(torch_dataset_path_test, f'{tot+i}.pt')
             print(f' [-] converting scene {file}-{i} into {path}')
-            frames, cameras = convert_raw_to_numpy(dataset_info, raw_data, jpeg=True)
-            scene = encapsulate(frames, cameras)
-            torch.save(scene, path)
+            p = Process(target=convert_raw_to_numpy, args=(dataset_info, raw_data, path, True))
+            p.start();p.join()
         tot += i
 
     print(f' [-] {tot} scenes in the test dataset')
