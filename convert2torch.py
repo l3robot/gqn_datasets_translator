@@ -124,7 +124,6 @@ def encapsulate(frames, cameras):
     return Scene(cameras=cameras, frames=frames)
 
 
-# @profile
 def convert_raw_to_numpy(dataset_info, raw_data, path, jpeg=False):
     feature_map = {
         'frames': tf.FixedLenFeature(
