@@ -1,7 +1,7 @@
 import os
 import sys
 
-from convert2numpy import _DATASETS as DATASETS_INFO
+from convert2torch import _DATASETS as DATASETS_INFO
 
 if  len(sys.argv) < 3:
     print(' [!] you need to give a <str> dataset and a <float> proportion to download')
