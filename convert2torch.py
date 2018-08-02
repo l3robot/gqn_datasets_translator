@@ -7,6 +7,7 @@ import time
 import os
 import collections
 import torch
+import gzip
 from multiprocessing import Process
 
 from tfrecord.tfrecord import Reader
@@ -144,7 +145,8 @@ def convert_raw_to_numpy(dataset_info, raw_data, path, jpeg=False):
         frames = sess.run(frames)
         cameras = sess.run(cameras)
     scene = encapsulate(frames, cameras)
-    torch.save(scene, path)
+    with gzip.open(path, 'wb') as f:
+        torch.save(scene, f)
 
 
 def show_frame(frames, scene, views):
