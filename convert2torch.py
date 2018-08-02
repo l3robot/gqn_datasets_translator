@@ -182,7 +182,7 @@ if __name__ == '__main__':
     for file in file_names:
         engine = tf.python_io.tf_record_iterator(file)
         for i, raw_data in enumerate(engine):
-            path = os.path.join(torch_dataset_path_train, f'{tot+i}.pt')
+            path = os.path.join(torch_dataset_path_train, f'{tot+i}.pt.gz')
             print(f' [-] converting scene {file}-{i} into {path}')
             p = Process(target=convert_raw_to_numpy, args=(dataset_info, raw_data, path, True))
             p.start();p.join() 
@@ -197,7 +197,7 @@ if __name__ == '__main__':
     for file in file_names:
         engine = tf.python_io.tf_record_iterator(file)
         for i, raw_data in enumerate(engine):
-            path = os.path.join(torch_dataset_path_test, f'{tot+i}.pt')
+            path = os.path.join(torch_dataset_path_test, f'{tot+i}.pt.gz')
             print(f' [-] converting scene {file}-{i} into {path}')
             p = Process(target=convert_raw_to_numpy, args=(dataset_info, raw_data, path, True))
             p.start();p.join()
