@@ -10,7 +10,6 @@ import torch
 import gzip
 from multiprocessing import Process
 
-from tfrecord.tfrecord import Reader
 import tensorflow as tf
 
 DatasetInfo = collections.namedtuple(
