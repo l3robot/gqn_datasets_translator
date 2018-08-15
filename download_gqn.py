@@ -8,7 +8,7 @@ if  len(sys.argv) < 3:
     exit()
 
 
-PROP = sys.argv[2]
+PROP = float(sys.argv[2])
 DATASET = sys.argv[1]
 dataset_info = DATASETS_INFO[DATASET]
 
