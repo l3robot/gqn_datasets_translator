@@ -4,6 +4,13 @@
 
 Don't hesitate to make a pull request. 
 
+**Dependencies**
+
+You need to install:
+
+- TensorFlow [here](https://www.tensorflow.org/install/)
+- gsutil [here](https://cloud.google.com/storage/docs/gsutil_install) *Note that gsutil works in python 2.\* only*
+
 **Usage:**
 
 If you want to download the entire dataset:
