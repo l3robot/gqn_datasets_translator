@@ -2,6 +2,12 @@ import os
 import sys
 
 
+DatasetInfo = collections.namedtuple(
+    'DatasetInfo',
+    ['basepath', 'train_size', 'test_size', 'frame_size', 'sequence_size']
+)
+
+
 DATASETS_INFO = dict(
     jaco=DatasetInfo(
         basepath='jaco',
@@ -52,6 +58,7 @@ DATASETS_INFO = dict(
         frame_size=64,
         sequence_size=15)
 )
+
 
 if  len(sys.argv) < 3:
     print(' [!] you need to give a <str> dataset and a <float> proportion to download')
