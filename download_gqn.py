@@ -1,6 +1,8 @@
 import os
 import sys
 
+import collections
+
 
 DatasetInfo = collections.namedtuple(
     'DatasetInfo',
