@@ -1,5 +1,7 @@
 # gqn_datasets_translator
 
+With major contributions from [versatran01](https://github.com/versatran01).
+
 ### Data downloader and data converter for DeepMind GQN dataset https://github.com/deepmind/gqn-datasets to use with other libraries than TensorFlow
 
 Don't hesitate to make a pull request. 
